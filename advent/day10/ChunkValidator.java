@@ -65,27 +65,6 @@ public class ChunkValidator {
         return 0;
     }
 
-    public static boolean isCorrupt(String line) {
-        // Corruption check
-        Deque<Character> chunkOpeners = new ArrayDeque<>();
-        for (char c : line.toCharArray()) {
-            if (closerMap.keySet().contains(c)) {
-                // Starting a new chunk
-                chunkOpeners.push(c);
-            } else if (openerMap.keySet().contains(c)) {
-                // Closing a chunk
-                Character opener = chunkOpeners.pop();
-                if (!opener.equals(openerMap.get(c))) {
-                    return true;
-                }
-            } else {
-                System.err.println("Unrecognized character: " + c);
-                System.exit(1);
-            }
-        }
-        return false;
-    }
-
     public static String getCompletionSequence(String line) {
         Deque<Character> chunkOpeners = new ArrayDeque<>();
         for (char c : line.toCharArray()) {
@@ -118,7 +97,7 @@ public class ChunkValidator {
     }
 
     public static void main(String[] args) {
-        Stream<String> completionSequenceStream = InputReader.readLinesFromInput("advent/day10/input.txt").stream().filter(line -> !isCorrupt(line)).map(ChunkValidator::getCompletionSequence);
+        Stream<String> completionSequenceStream = InputReader.readLinesFromInput("advent/day10/input.txt").stream().filter(line -> getSyntaxErrorScore(line) == 0).map(ChunkValidator::getCompletionSequence);
         long[] sortedScores = completionSequenceStream.mapToLong(ChunkValidator::getCompletionSequenceScore).sorted().toArray();
         System.out.println(sortedScores[sortedScores.length / 2]);
     }
