@@ -47,10 +47,6 @@ public class DiracDice {
             playerOneActive = other.playerOneActive;
         }
 
-        public boolean hasWinner() {
-            return playerOneScore >= WINNING_SCORE || playerTwoScore >= WINNING_SCORE;
-        }
-
         public boolean playerOneHasWon() {
             return playerOneScore >= WINNING_SCORE;
         }
@@ -104,25 +100,18 @@ public class DiracDice {
         // Statistics for simulations run initiating from this game state
         private GameStatistics gameStatistics;
 
-        // The number of occurrences of this state relative to the parent state
-        private long localFrequency;
-
-        public GameTree(GameState s, long freq) {
+        public GameTree(GameState s) {
             state = s;
-            localFrequency = freq; 
-        }
-
-        public GameState getState() {
-            return state;
-        }
-
-        public long getLocalFrequency() {
-            return localFrequency;
         }
 
         // Simulate all branches to completion
         public GameStatistics simulate(Map<GameState, GameTree> gameBook) {
-            if (!state.hasWinner()) {
+            
+            if (state.playerOneHasWon()) {
+                gameStatistics = new GameStatistics(1, 0);
+            } else if (state.playerTwoHasWon()) {
+                gameStatistics = new GameStatistics(0, 1);
+            } else {
                 children = new ArrayList<>();
                 long numPlayerOneWins = 0;
                 long numPlayerTwoWins = 0;
@@ -134,7 +123,7 @@ public class DiracDice {
                     if (gameBook.containsKey(childState)) {
                         childTree = gameBook.get(childState);
                     } else {
-                        childTree = new GameTree(childState, freq);
+                        childTree = new GameTree(childState);
                         childTree.simulate(gameBook);
                         gameBook.put(childState, childTree);
                     }
@@ -144,16 +133,6 @@ public class DiracDice {
                     numPlayerTwoWins += childTree.gameStatistics.numPlayerTwoWins * freq;
                 }
                 gameStatistics = new GameStatistics(numPlayerOneWins, numPlayerTwoWins);
-            } else {
-                if (state.playerOneHasWon()) {
-                    gameStatistics = new GameStatistics(1, 0);
-                } else if (state.playerTwoHasWon()) {
-                    gameStatistics = new GameStatistics(0, 1);
-                } else {
-                    System.err.println("Bad game state");
-                    System.exit(1);
-                    return null;
-                }
             }
 
             return this.gameStatistics;
@@ -182,7 +161,7 @@ public class DiracDice {
 
     public static void main(String[] args) {
         GameState initState = new GameState(9, 0, 4, 0, true);
-        GameTree gameTree = new GameTree(initState, 1);
+        GameTree gameTree = new GameTree(initState);
 
         Map<GameState, GameTree> gameBook = new HashMap<>();
 
