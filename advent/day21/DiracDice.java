@@ -74,10 +74,21 @@ public class DiracDice {
             }
         }
 
-        // See if we can terminate simulations early with a mercy rule
-        /*public boolean hasEffectiveWinner() {
-
-        }*/
+        private static GameState advanceActivePlayerPosition(GameState initState, int roll) {
+            GameState next = new GameState(initState);
+    
+            if (next.playerOneActive) {
+                next.playerOnePosition = advancePosition(next.playerOnePosition, roll);
+                next.playerOneScore+= next.playerOnePosition;
+            } else {
+                next.playerTwoPosition = advancePosition(next.playerTwoPosition, roll);
+                next.playerTwoScore+= next.playerTwoPosition;
+            }
+    
+            next.playerOneActive = !next.playerOneActive;
+    
+            return next;
+        }
     }
 
     private static class GameStatistics {
@@ -117,7 +128,7 @@ public class DiracDice {
                 long numPlayerTwoWins = 0;
                 for (var entry : ROLL_MAP.entrySet()) {
                     long freq = entry.getValue();
-                    GameState childState = advanceActivePlayerPosition(state, entry.getKey());
+                    GameState childState = GameState.advanceActivePlayerPosition(state, entry.getKey());
                     GameTree childTree;
 
                     if (gameBook.containsKey(childState)) {
@@ -137,22 +148,6 @@ public class DiracDice {
 
             return this.gameStatistics;
         }
-    }
-
-    private static GameState advanceActivePlayerPosition(GameState initState, int roll) {
-        GameState next = new GameState(initState);
-
-        if (next.playerOneActive) {
-            next.playerOnePosition = advancePosition(next.playerOnePosition, roll);
-            next.playerOneScore+= next.playerOnePosition;
-        } else {
-            next.playerTwoPosition = advancePosition(next.playerTwoPosition, roll);
-            next.playerTwoScore+= next.playerTwoPosition;
-        }
-
-        next.playerOneActive = !next.playerOneActive;
-
-        return next;
     }
 
     private static int advancePosition(int position, int roll) {

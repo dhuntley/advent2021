@@ -2,10 +2,10 @@ package advent.day21;
 
 public class SimpleDice {
     
-    public static abstract class Die {
+    public abstract static  class Die {
         private int rollCount = 0;
         
-        abstract public int roll();
+        public abstract int roll();
 
         protected void incrementRollCount() {
             rollCount++;

@@ -13,6 +13,10 @@ public class Coord3D {
         this.z = z;
     }
 
+    public Coord3D(Coord3D other) {
+        this.set(other);
+    }
+
     public void set(Coord3D other) {
         this.x = other.x;
         this.y = other.y;

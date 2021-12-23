@@ -13,7 +13,7 @@ import advent.common.util.InputReader;
 
 public class BigCavePathFinder {
 
-    private static class PrioritizedEntity<T> implements Comparable<PrioritizedEntity<T>> {
+    public static class PrioritizedEntity<T> implements Comparable<PrioritizedEntity<T>> {
         private T t;
         private Integer priority;
 
@@ -50,7 +50,7 @@ public class BigCavePathFinder {
         }
     }
 
-    private static class PriorityMap<T> {
+    public static class PriorityMap<T> {
         private Map<T, Integer> priorities = new HashMap<>();
         private PriorityQueue<PrioritizedEntity<T>> entities = new PriorityQueue<>();
 
