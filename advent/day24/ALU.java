@@ -6,15 +6,45 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.Deque;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
-import java.util.stream.LongStream;
+import java.util.Objects;
+import java.util.Set;
 
 import advent.common.util.InputReader;
 
 public class ALU {
 
+    private class DigitState {
+        public int digit;
+        public long z;
     
+        public DigitState(int digit, long z) {
+            this.digit = digit;
+            this.z = z;
+        }
+    
+        @Override
+        public boolean equals(Object o) {
+            if (!(o instanceof DigitState)) {
+                return false;
+            } else {
+                DigitState other = (DigitState) o;
+                return digit == other.digit && z == other.z;
+            }
+        }
+    
+        @Override
+        public int hashCode() {
+            return Objects.hash(digit,z);
+        }
+    
+        @Override
+        public String toString() {
+            return digit + ": " + z;
+        }
+    }
 
     private Map<String, Long> registers = new HashMap<>();
 
@@ -49,7 +79,11 @@ public class ALU {
         reset();
         setInputs(inputs);
         for (String line : program) {
-            this.execute(line);
+            if (!this.execute(line)) {
+                System.err.println("early termination");
+                // Execution terminates early if we hit an INP instruction with no input available
+                break;
+            }
         }
     }
 
@@ -61,6 +95,7 @@ public class ALU {
         setInputs(inputs);
         for (String line : program) {
             if (!this.execute(line)) {
+                System.err.println("early termination");
                 // Execution terminates early if we hit an INP instruction with no input available
                 break;
             }
@@ -73,6 +108,7 @@ public class ALU {
         setInput(input);
         for (String line : program) {
             if (!this.execute(line)) {
+                System.err.println("early termination");
                 // Execution terminates early if we hit an INP instruction with no input available
                 break;
             }
@@ -85,6 +121,7 @@ public class ALU {
         String arg1 = tokens[1];
 
         if (instruction.equals("inp")) {
+            // Terminate early if we have exhausted the input queue
             if (inputQueue.isEmpty()) {
                 return false;
             }
@@ -130,6 +167,33 @@ public class ALU {
         return modelNumberString.length() == 14 && modelNumberString.indexOf("0") == -1;
     }
 
+    public String findLargestSerialNumberSuffix(List<List<String>> programs, int digit, long inZ, Set<DigitState> digitStates) {
+
+        if (digit == programs.size()) {
+            return inZ == 0 ? "" : null;
+        }
+
+        for (long inW=1; inW<=9; inW++) {
+            runProgram(programs.get(digit), inW, inZ);
+            long outZ = registers.get("z");
+
+            DigitState digitState = new DigitState(digit, outZ);
+            if (digitStates.contains(digitState)) {
+                continue;
+            }
+
+            String result = findLargestSerialNumberSuffix(programs, digit + 1, outZ, digitStates);
+            if (result == null) {
+                digitStates.add(digitState);
+                continue;
+            } else {
+                return inW + result;
+            }
+        }
+
+        return null;
+    }
+
     public static void main(String[] args) {
         List<String> lines = InputReader.readLinesFromInput("advent/day24/input.txt");
 
@@ -147,94 +211,7 @@ public class ALU {
         }
 
         ALU alu = new ALU();
-
-        Map<String, Long> validSuffixes = new HashMap<>();
-        for (long i=1; i<=9; i++) {
-            for (long j=-1000; j<=1000; j++) {
-                alu.runProgram(programs.get(13), i, j);
-                if (alu.getValue("z") == 0) {
-                    validSuffixes.put(Long.toString(i), j);
-                }
-            }
-        }
-        
-        System.out.println(validSuffixes);
-
-        for (int digit = 12; digit >= 1; digit--) {
-            Map<String, Long> updatedSuffixes = new HashMap<>();
-            for (var entry : validSuffixes.entrySet()) {
-                String suffix = entry.getKey();
-                long z = entry.getValue();
-                //System.out.println(suffix);
-                
-                for (long i=1; i<=9; i++) {
-                    for (long j=0; j<=10000; j++) {
-                        
-                        alu.runProgram(programs.get(digit), i, j);
-                        if (alu.getValue("z") == z) {
-                            updatedSuffixes.put(Long.toString(i) + suffix, j);
-                        }
-                    }
-                }
-            }
-            validSuffixes = updatedSuffixes;
-            System.out.println(validSuffixes);
-        }
-
-        Map<String, Long> updatedSuffixes = new HashMap<>();
-        for (var entry : validSuffixes.entrySet()) {
-            String suffix = entry.getKey();
-            long z = entry.getValue();
-            //System.out.println(suffix);
-            
-            for (long i=1; i<=9; i++) { 
-                alu.runProgram(programs.get(0), i, 0);
-                if (alu.getValue("z") == z) {
-                    updatedSuffixes.put(Long.toString(i) + suffix, 0l);
-                }
-            }
-        }
-        validSuffixes = updatedSuffixes;
-
-
-
-        /*for (var entry : validSuffixes.entrySet()) {
-            String suffix = entry.getKey();
-            long z = entry.getValue();
-            alu.runProgram(programs.get(12), Long.parseLong(suffix.substring(0,1)), z);
-            alu.runProgram(programs.get(13), Long.parseLong(suffix.substring(1,2)), alu.getValue("z"));
-            System.out.println(alu.getValue("z"));
-        }*/
-
-        System.out.println(validSuffixes);
-
-
-
-        // Long[] input = { 9l };
-        // //alu.runProgram(program, input, 0, 0, 0, 0);
-        // System.out.println(alu.getValue("z"));
-
-        // long i = 0l;
-        // /*while (i < 10000) {
-        //     alu.runProgram(program, input, 0, 0, 0, 0);
-        //     System.out.println()
-        //     if (alu.getValue("z") == 0) {
-        //         System.out.println(i);
-        //     }
-        //     i++;
-        // }*/
-
-        // long inputNumber = 13579246899999l;
-        // /*while (true) {
-        //     if (validateInputNumber(inputNumber)) {
-        //         alu.runProgram(program, formatInputNumber(inputNumber));
-        //         if (alu.getValue("z") == 0) {
-        //             System.out.println("VALID ID: " + inputNumber);
-        //             //break;
-        //         }
-        //     }
-        //     inputNumber++;
-        //     break;
-        // }*/
+        Set<DigitState> digitStates = new HashSet<>();
+        System.out.println(alu.findLargestSerialNumberSuffix(programs, 0, 0, digitStates));
     }
 }
